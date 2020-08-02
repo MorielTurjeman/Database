@@ -134,3 +134,43 @@ int main(int argc, const char* argv[])
 	sess.close();
 		
 }
+
+void isBookInStock(char* bookName)
+{
+	const char* url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
+	cout << "Creating session on " << url
+		<< " ..." << endl;
+	Session sess(url);
+	sess.sql("USE bookstore").execute();
+
+	//define query
+	auto query = sess.sql(R"(SELECT 
+    b.bookName,
+    b.book_id,
+    count(sp.store_purchase_id) AS 'stockCount',
+    count(bis.store_purchase_id) AS 'soldCount',
+    ('stockCount' - 'soldCount') as toal
+FROM
+    books AS b
+        JOIN
+    store_purchase AS sp ON b.book_id = sp.book_id
+        JOIN
+    books_in_shipments AS bis ON sp.store_purchase_id = bis.store_purchase_id
+WHERE
+    b.bookName = ?
+        
+GROUP BY b.book_id;)");
+
+	query.bind(bookName); // set the paramenters
+	auto set = query.execute(); //run the query
+	set.count();
+	auto rows = set.fetchAll();
+
+	for (auto row : rows)
+	{
+		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
+	}
+
+	sess.close();
+
+}
