@@ -36,43 +36,64 @@
 using ::std::cout;
 using ::std::endl;
 using namespace ::mysqlx;
+
+//query 13, shipment status
+void getShipmentStatus(Session& sess, int shipmentId) {
+	auto query = sess.sql(R"(select shipments.shipment_id, shipmentStatus
+				from
+				bookstore.shipments where shipment_id = ?)");
+	query.bind(shipmentId);
+	auto set = query.execute();
+
+	if (set.hasData())
+	{
+		// the query returned at least one row
+		cout << "The status of shipment id: " << shipmentId << " is: " << set.fetchOne().get(1) << endl;
+		//fetch one return the current row, and advances to the next one, if exists.
+		//we use fetchone instead of a loop since this query should return only one row anyway,
+		//if more than one row should be reutrned, we will use a loop with fetchall.
+		//get(1) returns the column index 1 in the row
+		
+	}
+	else
+	{
+		cout << "Could not find shipment" << endl;
+		// the query returnes 0 rows, or in our case, the shipment id is wrong
+	}
+	
+
+}
+
 int main(int argc, const char* argv[])
 {
-	
-		const char* url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
-		cout << "Creating session on " << url
-			<< " ..." << endl;
-		Session sess(url);
-		sess.sql("USE bookstore").execute();
+	const char* url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
+	cout << "Creating session on " << url
+		<< " ..." << endl;
+	Session sess(url);
+	sess.sql("USE bookstore").execute();
 
-		//define query
-		auto query = sess.sql(R"(select books.book_id, books.bookName, count(books.book_id)
-									from         books_in_shipments
-													inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
-											inner join books on store_purchase.book_id = books.book_id
-									where         books.bookName = ?
-									group by
-											books.book_id)");
-
-		query.bind("The Great Gatsby"); // set the paramenters
-		auto set = query.execute(); //run the query
-		set.count();
-		auto rows = set.fetchAll();
-
-		for (auto row : rows)
-		{
-			std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
-		}
+	getShipmentStatus(sess, 3);
 
 
-		/*auto set = sess.sql("Select * from bookstore.books").execute();
-		auto rows = set.fetchAll();
-		cout << "Printing rows " << endl;
-		for (auto row : rows)
-		{
-			cout << row.get(1) << "\n";
-		}*/
+	//define query
+	auto query = sess.sql(R"(select books.book_id, books.bookName, count(books.book_id)
+								from         books_in_shipments
+												inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+										inner join books on store_purchase.book_id = books.book_id
+								where         books.bookName = ?
+								group by
+										books.book_id)");
+
+	query.bind("The Great Gatsby"); // set the paramenters
+	auto set = query.execute(); //run the query
 		
-		sess.close();
+	auto rows = set.fetchAll();
+	for (auto row : rows)
+	{
+		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
+	}
+
+
+	sess.close();
 		
 }
