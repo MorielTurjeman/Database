@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 
 #include <iostream>
 #include <mysqlx/xdevapi.h>
-
+#include<string>
 using ::std::cout;
 using ::std::endl;
 using namespace ::mysqlx;
@@ -64,6 +64,42 @@ void getShipmentStatus(Session& sess, int shipmentId) {
 
 }
 
+//query 3, The oldest book in stock
+void oldestBook(Session& sess) {
+	auto query = sess.sql(R"(select books.bookName
+from        store_purchase
+                inner join books on books.book_id = store_purchase.book_id
+                where
+                        store_purchase_id not in (select books_in_shipments.store_purchase_id from books_in_shipments)
+order by purchaseDate
+limit 1;)");
+
+	auto set = query.execute();
+
+	if (set.hasData()) {
+		cout << "the oldest book is:" << set.fetchOne().get(0) << endl;
+	}
+
+	else {
+		cout << "No books at Data Base" << endl;
+	}
+	
+}
+
+
+//query 5, how many copies of book x has been sold
+
+void copiesSold(Session& sess, std::string bookName)
+{
+
+}
+
+
+
+
+
+
+
 int main(int argc, const char* argv[])
 {
 	const char* url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
@@ -73,25 +109,26 @@ int main(int argc, const char* argv[])
 	sess.sql("USE bookstore").execute();
 
 	getShipmentStatus(sess, 3);
+	oldestBook(sess);
 
 
 	//define query
-	auto query = sess.sql(R"(select books.book_id, books.bookName, count(books.book_id)
-								from         books_in_shipments
-												inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
-										inner join books on store_purchase.book_id = books.book_id
-								where         books.bookName = ?
-								group by
-										books.book_id)");
+	//auto query = sess.sql(R"(select books.book_id, books.bookName, count(books.book_id)
+	//							from         books_in_shipments
+	//											inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+	//									inner join books on store_purchase.book_id = books.book_id
+	//							where         books.bookName = ?
+	//							group by
+	//									books.book_id)");
 
-	query.bind("The Great Gatsby"); // set the paramenters
-	auto set = query.execute(); //run the query
-		
-	auto rows = set.fetchAll();
-	for (auto row : rows)
-	{
-		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
-	}
+	//query.bind("The Great Gatsby"); // set the paramenters
+	//auto set = query.execute(); //run the query
+	//	
+	//auto rows = set.fetchAll();
+	//for (auto row : rows)
+	//{
+	//	std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
+	//}
 
 
 	sess.close();
