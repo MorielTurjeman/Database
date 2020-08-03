@@ -572,6 +572,185 @@ void sumBit(Session &sess, int month, int year)
 	auto rows = set.fetchAll();
 }
 
+//query 17, how many shippings were done by Xpress and how many by the post office in the last 12 months
+void numOfShippingsExpressAndPost(Session& sess)
+{
+	auto query = sess.sql(R"(
+	SELECT 
+    SUM(ship.delivery_type_id BETWEEN 1 AND 2) AS postCount,
+    SUM(ship.delivery_type_id BETWEEN 3 AND 4) AS xpressCount
+FROM
+    delivery_types AS del
+        JOIN
+    shipments AS ship ON del.delivery_type_id = ship.delivery_type_id
+        JOIN
+    purchase AS purch ON ship.purchase_id = purch.purchase_id
+WHERE
+    (purch.purchasDate BETWEEN DATE_SUB(NOW(), INTERVAL 12 MONTH) AND NOW());
+	)");
+
+	auto set = query.execute();
+	set.count();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Number of deliveries done by The Israeli Post Office: " <<row.get(0) << ". Number of deliveries done by Xpress company: " << row.get(1) << std::endl;
+		}
+	}
+
+	else
+	{
+		std::cout << "Could not find how many shippings were done by Xpress and the Post Office." << std::endl;
+	}
+	
+}
+
+//query 19, list of customers who haven't bought anything in the past two years
+void noPurchaseInThePastTwoYears(Session& sess)
+{
+	auto query = sess.sql(R"(
+	SELECT 
+    c.firstName,
+    c.lastName,
+    c.customer_id,
+    c.address,
+    c.phoneNum
+FROM
+    bookstore.purchase AS p
+        JOIN
+    bookstore.customer AS c ON p.customer_id = c.customer_id
+WHERE
+    p.customer_id NOT IN (SELECT DISTINCT
+            purchase.customer_id
+        FROM
+            bookstore.purchase
+        WHERE
+            purchasDate BETWEEN DATE_ADD(CURRENT_TIMESTAMP,
+                INTERVAL - 2 YEAR) AND CURRENT_TIMESTAMP);
+	)");
+
+	auto set = query.execute();
+	set.count();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Customers who have not made any purchase in the past 24 months: " << std::endl;
+			std::cout << row.get(0) << " " << row.get(1) << ", customer id: " << row.get(2) << ", address:" << row.get(3) << ", phone number: " << row.get(4)<< "." << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	else
+	{
+		std::cout << "Could not find how many shippings were done by Xpress and the Post Office." << std::endl;
+	}
+
+}
+
+//query 20, customers who made reservations and haven't bought the books
+void haventPurchasedReservations(Session& sess)
+{
+	auto query = sess.sql(R"(
+	select c.firstName, c.lastName, res.customer_id, res.book_id, DATE_FORMAT(res.lastContact,"%Y-%M-%d"), DATE_FORMAT( res.reservationDate, "%Y-%M-%d")  from bookstore.reservations as res join bookstore.customer as c on res.reservation_id = c.customer_id
+	where reservationStatus = 'arrived to store' 
+	and lastContact <= date_add(current_timestamp, interval -14 day);
+	)");
+
+	auto set = query.execute();
+	set.count();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Customers who have made reservations, were notified the books arrived and haven't bougt: " << std::endl;
+			std::cout << row.get(0) << " " << row.get(1) << ", customer id: " << row.get(2) << ", book id:" << row.get(3) << ", last contacted: " << row.get(4) << ", reservation date: "<< row.get(5) << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	else
+	{
+		std::cout << "Could not find how many shippings were done by Xpress and the Post Office." << std::endl;
+	}
+}
+
+//query 22, how many books the store purchase between date1 and date 2, and the sum of the price for them
+void storePurchaseBetweenTwoDates(Session& sess, std::string purchaseDate1, std::string purchaseDate2)
+{
+	auto query = sess.sql(R"(
+	select count(store_purchase_id) as purchaseCount,
+	sum(book_cost)
+	from store_purchase where purchaseDate between str_to_date(?, '%Y-%m-%d') and str_to_date(?, '%Y-%m-%d');
+	)");
+	query.bind(purchaseDate1);
+	query.bind(purchaseDate2);
+
+	auto set = query.execute();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Number of books the store bought: " << row.get(0) << "."<<std::endl;
+			std::cout << "Total cost for these books: " << row.get(1) <<"."<< std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	else
+	{
+		std::cout << "Could not find books between the two dates." << std::endl;
+	}
+}
+
+//query 24, salary of a given employee
+void calculateSalary(Session& sess, int employeeId, int month, int year)
+{
+	auto query = sess.sql(R"(
+	SELECT 
+    emp.idEmployees as 'employee id',
+    emp.firstName,
+    emp.lastName,
+    wh.hour_month_salary AS 'wage per hour at the time',
+    (wh.hour_month_salary * wh.hours) AS 'total-salary',
+    wh.month,
+    wh.year
+FROM
+    employees AS emp
+        JOIN
+    work_hours AS wh ON emp.idEmployees = wh.employee_id
+WHERE
+    emp.idEmployees = ? AND wh.month = ?
+        AND wh.year = ?;
+	)");
+
+	query.bind(employeeId);
+	query.bind(month);
+	query.bind(year);
+
+	auto set = query.execute();
+	auto rows = set.fetchAll();
+
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Salary of " << row.get(1) << " " << row.get(2) << " for that month:" << row.get(4) << "." << std::endl;
+		}
+		std::cout << std::endl;
+	}
+	else
+	{
+		std::cout << "Could not calculate salary of employee with employee id" << employeeId << ". Please make sure the number you entered is correct." << std::endl;
+	}
+}
+
+int main(int argc, const char* argv[])
 
 
 
@@ -714,9 +893,17 @@ int main(int argc, const char *argv[])
 	calculateShipping(sess, 1);*/
 
 	//sumXpress(sess, 6, 2020);
+
+	//sumBit(sess, 6, 2020);
+
+	//numOfShippingsExpressAndPost(sess);
 	//diffEdition(sess);
 	//sumBit(sess, 6, 2020);
+	//noPurchaseInThePastTwoYears(sess);
+
+	//haventPurchasedReservations(sess);
+	//storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
+	calculateSalary(sess, 12, 7, 2020);
 	monthlyStorage(sess, 2019);
-	
 	sess.close();
 }
