@@ -542,6 +542,41 @@ void sumBit(Session& sess, int month, int year)
 
 }
 
+//query 17, how many shippings were done by Xpress and how many by the post office in the last 12 months
+void numOfShippingsExpressAndPost(Session& sess)
+{
+	auto query = sess.sql(R"(
+	SELECT 
+    SUM(ship.delivery_type_id BETWEEN 1 AND 2) AS postCount,
+    SUM(ship.delivery_type_id BETWEEN 3 AND 4) AS xpressCount
+FROM
+    delivery_types AS del
+        JOIN
+    shipments AS ship ON del.delivery_type_id = ship.delivery_type_id
+        JOIN
+    purchase AS purch ON ship.purchase_id = purch.purchase_id
+WHERE
+    (purch.purchasDate BETWEEN DATE_SUB(NOW(), INTERVAL 12 MONTH) AND NOW());
+	)");
+
+	auto set = query.execute();
+	set.count();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Number of deliveries done by The Israeli Post Office: " <<row.get(0) << ". Number of deliveries done by Xpress company: " << row.get(1) << std::endl;
+		}
+	}
+
+	else
+	{
+		std::cout << "Could not find how many shippings were done by Xpress and the Post Office." << std::endl;
+	}
+	
+}
+
 
 
 int main(int argc, const char* argv[])
@@ -601,7 +636,9 @@ int main(int argc, const char* argv[])
 
 	//sumXpress(sess, 6, 2020);
 
-	sumBit(sess, 6, 2020);
+	//sumBit(sess, 6, 2020);
+
+	numOfShippingsExpressAndPost(sess);
 
 
 	sess.close();
