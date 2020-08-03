@@ -516,8 +516,12 @@ void sumXpress(Session &sess, int month, int year)
 void sumBit(Session &sess, int month, int year)
 {
 	auto query = sess.sql(R"(
-	select month(purchasDate), paymentType, count(paymentType='Bit') as 'bit-count', sum(totalPrice)
-	from bookstore.purchase where paymentType = 'Bit'
+	select month(purchasDate), paymentType, count(paymentType='Bit') as 'bit-count', sum(store_purchase.price)
+	from bookstore.purchase
+		inner join shipments on shipments.purchase_id = purchase.purchase_id
+        inner join books_in_shipments on books_in_shipments.shipment_id = shipments.shipment_id
+        inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+    where paymentType = 'Bit'
 	and month(purchasDate) = ? and year(purchasDate) = ?
 	group by month(purchasDate);
 	)");
@@ -1020,6 +1024,7 @@ int main(int argc, const char* argv[])
 
 	while (1)
 	{
+		std::cin >> choice;
 		switch (choice)
 		{
 
@@ -1188,6 +1193,9 @@ int main(int argc, const char* argv[])
 		default:
 			break;
 		}
+
+		std::cout << "Pick a number" << std::endl;
+
 	}
 
 	sess.close();
