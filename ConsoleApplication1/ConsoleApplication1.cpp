@@ -183,7 +183,7 @@ void whoIsTheOldestCustomer(Session &sess)
 
 }
 
-//q4, current reservation list
+//query 4, current reservation list
 
 void reservationList(Session &sess)
 {
@@ -260,7 +260,6 @@ void top3Customers(Session &sess)
 }
 
 //query 8, the book with most traslations
-
 void mostTranslatedBook(Session &sess)
 {
 	auto query = sess.sql(R"(select bookName
@@ -977,6 +976,40 @@ void purchaseHistory(Session& sess, std::string CustomerFN, std::string customer
 	}
 }
 
+//query 10, reservation history for a given customer
+void reservationHistory(Session& sess, int customerId)
+{
+	auto query = sess.sql(R"(
+	select cu.firstName, cu.lastName, b.bookName, res.reservationStatus, DATE_FORMAT(res.reservationDate,"%Y-%M-%d")
+	from reservations as res 
+	join books as b on res.book_id = b.book_id
+	join customer as cu on res.customer_id = cu.customer_id
+	where res.customer_id =?;
+	)");
+
+	query.bind(customerId);
+
+	auto set = query.execute();
+	auto rows = set.fetchAll();
+
+	if (set.hasData())
+	{
+		
+		for (auto row : rows)
+		{
+			std::cout << "Reservation history for " << row.get(0) << " " << row.get(1) << ": " << std::endl;
+			std::cout << "book name: " << row.get(2) << ", reservation status: " << row.get(3) << " , reservation date: "<< row.get(4) << std::endl;
+		}
+		std::cout << std::endl;
+	}
+	else
+	{
+		std::cout << "Could not find reservations for customer id " << customerId  << "."<< std::endl;
+	}
+}
+
+
+
 int main(int argc, const char* argv[])
 {
 	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
@@ -1054,6 +1087,12 @@ int main(int argc, const char* argv[])
 
 	//haventPurchasedReservations(sess);
 	//storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
+	//calculateSalary(sess, 12, 7, 2020);
+	//monthlyStorage(sess, 2019);
+	//bestSellingEmployee(sess, 6, 2020);
+	//reservationHistory(sess, 1);
+
+	//mostTranslatedBook(sess);
 	//calculateSalary(sess, 12, 7, 2020);
 	//monthlyStorage(sess, 2019);
 	/*bestSellingEmployee(sess, 6, 2020);*/
