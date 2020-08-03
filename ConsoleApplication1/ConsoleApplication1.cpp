@@ -32,7 +32,8 @@
 
 #include <iostream>
 #include <mysqlx/xdevapi.h>
-#include<string>
+#include <string>
+#include <ctime>
 using ::std::cout;
 using ::std::endl;
 using namespace ::mysqlx;
@@ -91,57 +92,73 @@ limit 1;)");
 
 void copiesSold(Session& sess, std::string bookName)
 {
+	auto query = sess.sql(R"(select books.book_id, books.bookName, count(books.book_id)
+							from         books_in_shipments
+							inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+							inner join books on store_purchase.book_id = books.book_id
+							where         books.bookName = ?
+							group by
+							books.book_id)");
 
+	query.bind(bookName);
+	auto set = query.execute();
+
+		if (set.hasData()) {
+		cout << "The book:" << bookName << " has been sold: " << set.fetchOne().get(2) << " times" << endl;
+	}
+
+	else {
+		cout << "The book have never been sold" << endl;
+	}
 }
-
 
 
 //query 1, is book X in stock
 
-void isBookInStock(Session& sess, std::string bookName)
-{
-	//define query
-	auto query = sess.sql(R"(SELECT 
-    b.bookName,
-    b.book_id,
-    count(sp.store_purchase_id) AS 'stockCount',
-    count(bis.store_purchase_id) AS 'soldCount',
-    ('stockCount' - 'soldCount') as toal
-FROM
-    books AS b
-        JOIN
-    store_purchase AS sp ON b.book_id = sp.book_id
-        JOIN
-    books_in_shipments AS bis ON sp.store_purchase_id = bis.store_purchase_id
-WHERE
-    b.bookName = ?
+// void isBookInStock(Session& sess, std::string bookName)
+// {
+// 	//define query
+// 	auto query = sess.sql(R"(SELECT 
+//     b.bookName,
+//     b.book_id,
+//     count(sp.store_purchase_id) AS 'stockCount',
+//     count(bis.store_purchase_id) AS 'soldCount',
+//     ('stockCount' - 'soldCount') as toal
+// FROM
+//     books AS b
+//         JOIN
+//     store_purchase AS sp ON b.book_id = sp.book_id
+//         JOIN
+//     books_in_shipments AS bis ON sp.store_purchase_id = bis.store_purchase_id
+// WHERE
+//     b.bookName = ?
         
-GROUP BY b.book_id;)");
+// GROUP BY b.book_id;)");
 
-	query.bind(bookName); // set the paramenters
-	auto set = query.execute(); //run the query
-	if (set.hasData())
-	{
-		// the query returned at least one row
-		cout << "There are " << set.fetchOne().get(4) << " copies of " << bookName << endl;
+// 	query.bind(bookName); // set the paramenters
+// 	auto set = query.execute(); //run the query
+// 	if (set.hasData())
+// 	{
+// 		// the query returned at least one row
+// 		cout << "There are " << set.fetchOne().get(4) << " copies of " << bookName << endl;
 
-	}
-	else
-	{
-		cout << "Could not get number of copies" << endl;
-		// the query returnes 0 rows
-	}
-	set.count();
-	auto rows = set.fetchAll();
+// 	}
+// 	else
+// 	{
+// 		cout << "Could not get number of copies" << endl;
+// 		// the query returnes 0 rows
+// 	}
+// 	set.count();
+// 	auto rows = set.fetchAll();
 
-	for (auto row : rows)
-	{
-		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
-	}
+// 	for (auto row : rows)
+// 	{
+// 		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
+// 	}
 
 
 
-}
+// }
 
 
 //query 2, who is the oldest customer
@@ -165,7 +182,6 @@ void whoIsTheOldestCustomer(Session& sess)
 		// the query returnes 0 rows
 	}
 
-	set.count();
 	auto rows = set.fetchAll();
 
 	for (auto row : rows)
@@ -302,6 +318,171 @@ void calculateShipping(Session& sess, int shipment_id)
 
 
 
+
+
+
+
+void isBookInStock(Session& sess, std::string bookName)
+{
+	
+	//define query
+	auto query = sess.sql(R"(SELECT 
+   b.bookName,
+   b.book_id,
+   count(sp.store_purchase_id) AS 'stockCount',
+   count(bis.store_purchase_id) AS 'soldCount',
+   ('stockCount' - 'soldCount') as toal
+FROM
+   books AS b
+       JOIN
+   store_purchase AS sp ON b.book_id = sp.book_id
+       JOIN
+   books_in_shipments AS bis ON sp.store_purchase_id = bis.store_purchase_id
+WHERE
+   b.bookName = ?
+       
+GROUP BY b.book_id;)");
+
+	query.bind(bookName); // set the paramenters
+	auto set = query.execute(); //run the query
+	auto rows = set.fetchAll();
+
+	for (auto row : rows)
+	{
+		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
+	}
+
+}
+
+
+//query 6, Favorite Author
+void favAuthor(Session& sess, std::string purchaseDateD1, std::string purchaseDateD2)
+{
+	auto query = sess.sql(R"(select authors.firsName, authors.lastName, count(book_authors.book_id) 'readTheBookCount'
+from bookstore.authors
+        inner join bookstore.book_authors on book_authors.author_id= authors.author_id
+		inner join bookstore.store_purchase on book_authors.book_id= store_purchase.book_id
+		inner join bookstore.books_in_shipments on bookstore.store_purchase.store_purchase_id = books_in_shipments.store_purchase_id
+		inner join bookstore.shipments on books_in_shipments.shipment_id =shipments.shipment_id
+		inner join bookstore.purchase on shipments.shipment_id =purchase.purchase_id
+		where purchasDate between str_to_date(?, '%Y-%m-%d') and str_to_date(?, '%Y-%m-%d') 
+		 group by authors.author_id 
+		 order by count(book_authors.book_id) desc
+		limit 1;)");
+
+
+	query.bind(purchaseDateD1);
+	query.bind(purchaseDateD2);
+	auto set = query.execute();
+	if (set.hasData())
+
+	{
+		auto row = set.fetchOne();
+		std::cout << "The author most read is: " << row.get(0) << " " << row.get(1) << endl;
+	}
+	
+	else
+	{
+		cout << "There were no purchase at this dates, try other dates" << endl;
+	}
+	
+	
+}
+
+
+//query 12, Split shipments details
+void splitShipments(Session& sess, std::string customerFN, std::string customerLN)
+{
+	auto query = sess.sql(R"(select purchase.purchase_id, DATE_FORMAT(purchase.purchasDate, "%Y-%M-%d") , customer.firstName, customer.lastName, delivery_types.company, delivery_types.type, s1.trackingNum, s1.address
+from
+bookstore.shipments s1 inner join bookstore.shipments s2 on s1.purchase_id=s2.purchase_id
+inner join delivery_types on s2.delivery_type_id = delivery_types.delivery_type_id
+inner join purchase on s1.purchase_id = purchase.purchase_id
+inner join customer on purchase.customer_id = customer.customer_id
+where s1.shipment_id != s2.shipment_id and customer.firstName = ? and customer.lastName=?;)");
+
+	query.bind(customerFN);
+	query.bind(customerLN);
+	auto set = query.execute();
+
+	if (set.hasData()) {
+		auto rows = set.fetchAll();
+
+		for (auto row : rows)
+		{
+			std::cout << "purchase id: ";
+				for (int i = 0; i < 8; i++)
+					std::cout << row.get(i) <<  " "; // << ", " << row.get(1) << ", " << row.get(2) << ", " << row.get(3) << ", " << row.get(4) << ", " << row.get(5) << ", " << row.get(6) << ", " << row.get(7) << endl;
+			std::cout << endl;
+		}
+
+
+	}
+	else
+		cout << "The customer: " << customerFN << " " << customerLN << "have never split a shipment" << endl;
+
+	
+}
+
+//query 16, Transactions with above-average profits
+void aboveAvg(Session& sess)
+{
+	auto query = sess.sql(R"(SELECT 
+    purchase.purchase_id,
+        DATE_FORMAT(purchase.purchasDate, "%Y-%M-%d"),
+        SUM(store_purchase.price - store_purchase.book_cost) 'totalProfit'
+FROM
+    books_in_shipments
+        INNER JOIN
+    store_purchase ON books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+        INNER JOIN
+    shipments ON books_in_shipments.shipment_id = shipments.shipment_id
+        INNER JOIN
+    purchase ON shipments.purchase_id = purchase.purchase_id
+    where purchase.purchasDate > DATE_ADD(NOW(), INTERVAL - 12 MONTH)
+GROUP BY purchase.purchase_id
+HAVING SUM(store_purchase.price - store_purchase.book_cost) > (SELECT 
+        AVG(store_purchase.price - store_purchase.book_cost) 'Average'
+    FROM
+        books_in_shipments
+            INNER JOIN
+        store_purchase ON books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+            INNER JOIN
+        shipments ON books_in_shipments.shipment_id = shipments.shipment_id
+            INNER JOIN
+        purchase ON shipments.purchase_id = purchase.purchase_id
+    WHERE
+        purchase.purchasDate > DATE_ADD(NOW(), INTERVAL - 12 MONTH))
+ORDER BY purchase.purchase_id;
+)");
+
+
+auto set = query.execute();
+
+if (set.hasData())
+{
+
+	
+	auto rows = set.fetchAll();
+	std::cout << "Transactions with above-average profits in the past 12 months:" << endl;
+	for (auto row : rows)
+	{
+		
+		/*for (int i = 0; i < 3; i++)*/
+			std::cout << "Purchase ID: " << row.get(0) << " , " << "Purchase date: " << row.get(1) << " , " << "Total profit(NIS): " << row.get(2)<< endl;
+	}
+	std::cout << endl;
+}
+
+else
+std::cout << "There are no Transactions with above - average profits in the past 12 months" << endl;
+
+}
+
+//query 18, Shipments with two different editions 
+
+
+
 int main(int argc, const char* argv[])
 {
 	const char* url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
@@ -309,42 +490,59 @@ int main(int argc, const char* argv[])
 		<< " ..." << endl;
 	Session sess(url);
 	sess.sql("USE bookstore").execute();
-
+	
+	cout << "ship status" << endl;
 	getShipmentStatus(sess, 3);
+
+	cout << "oldest book" << endl;
 	oldestBook(sess);
 
-	isBookInStock(sess, "Animal Farm");
+	cout << "copies sold" << endl;
+	copiesSold(sess, "The Adventures of Sherlock Holmes");
 
-	whoIsTheOldestCustomer(sess);
+	cout << "ship status" << endl;
+	favAuthor(sess, "2020-04-05" ,"2020-07-30");
+
+	cout << "fave authoer:" << endl;
+	favAuthor(sess, "2000-1-1", "2020-1-1");
+
+	cout << "split shipments" << endl;
+	splitShipments(sess, "George", "Washington");
+
+	cout << "reservation list" << endl;
 	reservationList(sess);
 
+	cout << "abvAVG" << endl;
+	aboveAvg(sess);
+
+	cout << "ship status" << endl;
+	getShipmentStatus(sess, 3);
+
+	cout << "OLDEST BOOK :" << endl;
+	oldestBook(sess);
+
+	cout << "IS BOOK IN STOCK :" << endl;
+	isBookInStock(sess, "Animal Farm");
+
+	cout << "OLDEST CUSTOMER" << endl;
+	whoIsTheOldestCustomer(sess);
+
+	cout << "RESERVATION LIST" << endl;
+	reservationList(sess);
+
+	cout << "TOP 3 CUSTOMER" << endl;
 	top3Customers(sess);
+
+	cout << "MOST TRANSLATED BOOK :" << endl;
 	mostTranslatedBook(sess);
+	cout << "CLAC SHIPMENT" << endl;
 	calculateShipping(sess, 1);
 
-	//define query
-	//auto query = sess.sql(R"(select books.book_id, books.bookName, count(books.book_id)
-	//							from         books_in_shipments
-	//											inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
-	//									inner join books on store_purchase.book_id = books.book_id
-	//							where         books.bookName = ?
-	//							group by
-	//									books.book_id)");
 
-	//query.bind("The Great Gatsby"); // set the paramenters
-	//auto set = query.execute(); //run the query
-	//	
-	//auto rows = set.fetchAll();
-	//for (auto row : rows)
-	//{
-	//	std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
-	//}
 
 
 	sess.close();
-
-	int x;
 		
-	std::cin >> x;
 }
+
 
