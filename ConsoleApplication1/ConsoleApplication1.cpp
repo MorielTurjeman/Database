@@ -750,6 +750,77 @@ WHERE
 	}
 }
 
+
+//query 21, books in storage in monthly view
+void monthlyStorage(Session& sess, int year)
+{
+	auto query = sess.sql(R"(select month, sum(bookIntoStorage) from
+(
+select distinct month(purchaseDate) as 'month', count(*) over(order by month(purchaseDate))  as 'bookIntoStorage'
+from
+	store_purchase
+where
+	location = 'storage'
+    and
+    year(purchaseDate) = ?
+union 
+select month(purchasDate), -1*count(*) as 'booksOutOfStorage'
+from books_in_shipments inner join shipments on shipments.shipment_id=books_in_shipments.shipment_id
+inner join purchase on shipments.purchase_id=purchase.purchase_id
+inner join store_purchase on books_in_shipments.store_purchase_id=store_purchase.store_purchase_id
+where year(purchasDate)=? and location='storage'
+group by month(purchasDate)
+) T1
+group by T1.month
+order by T1.month;)");
+
+	query.bind(year);
+	query.bind(year);
+	auto set = query.execute();
+
+	if (set.hasData())
+	{
+		auto rows = set.fetchAll();
+		for (auto row : rows)
+		{
+			std::cout << "year:" <<year << ", "<<" Month: " << row.get(0) << ", " << "amount of books in storage: " << row.get(1)<< endl;
+		}
+		
+	}
+
+	else
+	{
+		std::cout << "There were no books at storage at" << " " << year << "pick Another year " << endl;
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //query 25, employee who sold the most books in a given month
 void bestSellingEmployee(Session& sess, int month, int year)
 {
@@ -854,8 +925,8 @@ int main(int argc, const char* argv[])
 
 	//haventPurchasedReservations(sess);
 	//storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
-	//calculateSalary(sess, 12, 7, 2020);
-
+	calculateSalary(sess, 12, 7, 2020);
+	monthlyStorage(sess, 2019);
 	bestSellingEmployee(sess, 6, 2020);
 
 	sess.close();
