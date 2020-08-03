@@ -186,7 +186,7 @@ void whoIsTheOldestCustomer(Session &sess)
 	}
 }
 
-//q4, current reservation list
+//query 4, current reservation list
 
 void reservationList(Session &sess)
 {
@@ -260,7 +260,6 @@ void top3Customers(Session &sess)
 }
 
 //query 8, the book with most traslations
-
 void mostTranslatedBook(Session &sess)
 {
 	auto query = sess.sql(R"(select bookName
@@ -880,6 +879,8 @@ void reservationHistory(Session& sess, int customerId)
 	}
 }
 
+
+
 int main(int argc, const char* argv[])
 {
 	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
@@ -960,7 +961,9 @@ int main(int argc, const char* argv[])
 	//calculateSalary(sess, 12, 7, 2020);
 	//monthlyStorage(sess, 2019);
 	//bestSellingEmployee(sess, 6, 2020);
-	reservationHistory(sess, 1);
+	//reservationHistory(sess, 1);
+
+	//mostTranslatedBook(sess);
 
 	sess.close();
 }
