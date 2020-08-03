@@ -468,7 +468,7 @@ if (set.hasData())
 	for (auto row : rows)
 	{
 		
-		/*for (int i = 0; i < 3; i++)*/
+		
 			std::cout << "Purchase ID: " << row.get(0) << " , " << "Purchase date: " << row.get(1) << " , " << "Total profit(NIS): " << row.get(2)<< endl;
 	}
 	std::cout << endl;
@@ -480,6 +480,63 @@ std::cout << "There are no Transactions with above - average profits in the past
 }
 
 //query 18, Shipments with two different editions 
+void diffEdition(Session& sess) {
+
+	auto query = sess.sql(R"(SELECT distinct
+    shipments.shipment_id, shipments.trackingNum, shipments.address, shipments.shipmentStatus, delivery_types.company, delivery_types.type, T1.bookName
+FROM
+    (SELECT 
+        books_in_shipments.shipment_id,
+            books.book_id,
+            books.bookName
+    FROM
+        books_in_shipments
+    INNER JOIN store_purchase ON books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+    INNER JOIN books ON store_purchase.book_id = books.book_id) AS T1
+        INNER JOIN
+    (SELECT 
+        books_in_shipments.shipment_id,
+            books.book_id,
+            books.bookName    FROM
+        books_in_shipments
+    INNER JOIN store_purchase ON books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+    INNER JOIN books ON store_purchase.book_id = books.book_id) AS T2 ON T1.shipment_id = T2.shipment_id
+    inner join shipments on T1.shipment_id = shipments.shipment_id
+    inner join delivery_types on shipments.delivery_type_id = delivery_types.delivery_type_id
+WHERE
+    T1.book_id != T2.book_id
+        AND T1.bookName = T2.bookName;)");
+
+	auto set = query.execute();
+	if (set.hasData()) {
+
+		auto rows = set.fetchAll();
+
+		for (auto row : rows) {
+			
+			
+			std::cout << "Shipment ID: " << row.get(0) << ", "
+				<< "Tracking Number: " << row.get(1) << ", "
+				<< "Address :" << row.get(2) << ", "
+				<< "Shipment Status: " << row.get(3) << ", "
+				<< "Company: " << row.get(4) << ", "
+				<< "Delivery type: " << row.get(5) << ", "
+				<<"Book name: "<<row.get(6)
+				<< endl;
+
+		}
+}
+	else {
+
+		std::cout << "NO shipments with two different editions";
+	}
+}
+
+
+
+
+
+
 
 
 
@@ -491,53 +548,55 @@ int main(int argc, const char* argv[])
 	Session sess(url);
 	sess.sql("USE bookstore").execute();
 	
-	cout << "ship status" << endl;
-	getShipmentStatus(sess, 3);
+	//cout << "ship status" << endl;
+	//getShipmentStatus(sess, 3);
 
-	cout << "oldest book" << endl;
-	oldestBook(sess);
+	//cout << "oldest book" << endl;
+	//oldestBook(sess);
 
-	cout << "copies sold" << endl;
-	copiesSold(sess, "The Adventures of Sherlock Holmes");
+	//cout << "copies sold" << endl;
+	//copiesSold(sess, "The Adventures of Sherlock Holmes");
 
-	cout << "ship status" << endl;
-	favAuthor(sess, "2020-04-05" ,"2020-07-30");
+	//cout << "ship status" << endl;
+	//favAuthor(sess, "2020-04-05" ,"2020-07-30");
 
-	cout << "fave authoer:" << endl;
-	favAuthor(sess, "2000-1-1", "2020-1-1");
+	//cout << "fave authoer:" << endl;
+	//favAuthor(sess, "2000-1-1", "2020-1-1");
 
-	cout << "split shipments" << endl;
-	splitShipments(sess, "George", "Washington");
+	//cout << "split shipments" << endl;
+	//splitShipments(sess, "George", "Washington");
 
-	cout << "reservation list" << endl;
-	reservationList(sess);
+	//cout << "reservation list" << endl;
+	//reservationList(sess);
 
-	cout << "abvAVG" << endl;
-	aboveAvg(sess);
+	//cout << "abvAVG" << endl;
+	//aboveAvg(sess);
 
-	cout << "ship status" << endl;
-	getShipmentStatus(sess, 3);
+	//cout << "ship status" << endl;
+	//getShipmentStatus(sess, 3);
 
-	cout << "OLDEST BOOK :" << endl;
-	oldestBook(sess);
+	//cout << "OLDEST BOOK :" << endl;
+	//oldestBook(sess);
 
-	cout << "IS BOOK IN STOCK :" << endl;
-	isBookInStock(sess, "Animal Farm");
+	//cout << "IS BOOK IN STOCK :" << endl;
+	//isBookInStock(sess, "Animal Farm");
 
-	cout << "OLDEST CUSTOMER" << endl;
-	whoIsTheOldestCustomer(sess);
+	//cout << "OLDEST CUSTOMER" << endl;
+	//whoIsTheOldestCustomer(sess);
 
-	cout << "RESERVATION LIST" << endl;
-	reservationList(sess);
+	//cout << "RESERVATION LIST" << endl;
+	//reservationList(sess);
 
-	cout << "TOP 3 CUSTOMER" << endl;
-	top3Customers(sess);
+	//cout << "TOP 3 CUSTOMER" << endl;
+	//top3Customers(sess);
 
-	cout << "MOST TRANSLATED BOOK :" << endl;
-	mostTranslatedBook(sess);
-	cout << "CLAC SHIPMENT" << endl;
-	calculateShipping(sess, 1);
+	//cout << "MOST TRANSLATED BOOK :" << endl;
+	//mostTranslatedBook(sess);
+	//cout << "CLAC SHIPMENT" << endl;
+	//calculateShipping(sess, 1);
 
+
+	diffEdition(sess);
 
 
 
