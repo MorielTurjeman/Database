@@ -300,6 +300,15 @@ void calculateShipping(Session& sess, int shipment_id)
 	}
 }
 
+//query 14, sum of deliveries done by Xpress in a given month
+
+void sumXpress(Session& sess, int month, int year)
+{
+	auto query = sess.sql(R"(
+	
+	)");
+}
+
 
 
 int main(int argc, const char* argv[])
