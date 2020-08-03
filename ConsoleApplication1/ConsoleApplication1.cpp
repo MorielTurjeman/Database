@@ -984,94 +984,194 @@ int main(int argc, const char* argv[])
 	Session sess(url);
 	sess.sql("USE bookstore").execute();
 	
+	int choice;
 
-	//cout << "ship status" << endl;
-	//getShipmentStatus(sess, 3);
+	std::cout << "Pick a number" << std::endl;
+	std::cout << "0. Terminate the program.";
+	std::cout << "1. Check if a book is in stock." << std::endl;
+	std::cout << "2. Check which employee has worked in the store for the longest time." << std::endl;
+	std::cout << "3. Check which book has been in stock for the longest time." << std::endl;
+	std::cout << "4. Display current reservation list by date of reservation." << std::endl;
+	std::cout << "5. Check how many copies of a book have been sold." << std::endl;
+	std::cout << "6. Check which author was the most read between two dates." << std::endl;
+	std::cout << "7. Display 3 customers who have bought the most books during the years." << std::endl;
+	std::cout << "8. Check which book has the most translations in stock." << std::endl;
+	std::cout << "9. Display all purchases of a customer." << std::endl;
+	std::cout << "10. Display all reservations placed by a customer." << std::endl;
+	std::cout << "11. Calculate shipping." << std::endl;
+	std::cout << "12. Check if a customer has ever split a purchase into a number of deliveries." << std::endl;
+	std::cout << "13. Check delivery status." << std::endl;
+	std::cout << "14. Check the number of deliveries done by an Express Company at a certain month." << std::endl;
+	std::cout << "15. Check the sum of money transfered to the store through Bit App." << std::endl;
+	std::cout << "16. List the transactions made in the last twelve months which gave a profit higher than the average profit of the last twelve months." << std::endl;
+	std::cout << "17. Check how many deliveries were done by the Post-Office and how many were done by an Express Courier Company." << std::endl;
+	std::cout << "18. Display data of all deliveries ever made which included two or more different editions of the same book." << std::endl;
+	std::cout << "19. Display data of all customers who haven't purchased anything from the store in the past 24 months." << std::endl;
+	std::cout << "20. Display a list of people who placed a reservation, the store contacted them to let them know the book has arrived, 14 days passed and they still haven't bought the books." << std::endl;
+	std::cout << "21. Check how many books are in the warehouse in a certain month." << std::endl;
+	std::cout << "22. Check how many books were bought by the store between two dates, and how much the store paid for them." << std::endl;
+	std::cout << "23. Check the profit from sales in a certain month in a year." << std::endl;
+	std::cout << "24. Average annual number of transactions per month in a certain year." << std::endl;
+	std::cout << "25. Check the salary of an employee in a certain month." << std::endl;
+	std::cout << "26. Check which employee made the most sales in a certain month." << std::endl;
 
-	//cout << "oldest book" << endl;
-	//oldestBook(sess);
+	std::string bookName;
+	int id, month, year;
 
-				 /*cout << "ship status" << endl;
-	getShipmentStatus(sess, 3);
+	while (1)
+	{
+		switch (choice)
+		{
 
-	//cout << "copies sold" << endl;
-	//copiesSold(sess, "The Adventures of Sherlock Holmes");
+		case 0:
+			return 0;
 
-	//cout << "ship status" << endl;
-	//favAuthor(sess, "2020-04-05" ,"2020-07-30");
+		case 1:
+			std::cout << "Please enter the name of the book you want to search for:" << std::endl;
+			std::getline(std::cin, bookName);
+			isBookInStock(sess, bookName);
+			break;
 
-	//cout << "fave authoer:" << endl;
-	//favAuthor(sess, "2000-1-1", "2020-1-1");
+		case 2:
+			whoIsTheOldestCustomer(sess);
+			break;
 
-	//cout << "split shipments" << endl;
-	//splitShipments(sess, "George", "Washington");
+		case 3:
+			oldestBook(sess);
+			break;
 
-	//cout << "reservation list" << endl;
-	//reservationList(sess);
+		case 4:
+			reservationList(sess);
+			break;
 
-	//cout << "abvAVG" << endl;
-	//aboveAvg(sess);
+		case 5:
+			std::cout << "Please enter the name of the book you want to check the number of copies sold:" << std::endl;
+			std::getline(std::cin, bookName);
+			copiesSold(sess, bookName);
+			break;
 
-	//cout << "ship status" << endl;
-	//getShipmentStatus(sess, 3);
+		case 6:
+			std::cout << "Please enter two dates:" << std::endl;
+			//??
+			favAuthor(sess, );
+			break;
 
-	//cout << "OLDEST BOOK :" << endl;
-	//oldestBook(sess);
+		case 7:
+			top3Customers(sess);
+			break;
 
-	//cout << "IS BOOK IN STOCK :" << endl;
-	//isBookInStock(sess, "Animal Farm");
+		case 8:
+			mostTranslatedBook(sess);
+			break;
 
-	//cout << "OLDEST CUSTOMER" << endl;
-	//whoIsTheOldestCustomer(sess);
+		case 9:
+			/* code */
+			break;
 
-	//cout << "RESERVATION LIST" << endl;
-	//reservationList(sess);
+		case 10:
+			std::cout << "Please enter customer id:" << std::endl;
+			std::cin >> id;
+			reservationHistory(sess, id);
+			break;
 
-	//cout << "TOP 3 CUSTOMER" << endl;
-	//top3Customers(sess);
+		case 11:
+			std::cout << "Please enter shipping id:" << std::endl;
+			std::cin >> id;
+			calculateShipping(sess, id);
+			break;
 
-	//cout << "MOST TRANSLATED BOOK :" << endl;
-	//mostTranslatedBook(sess);
-	//cout << "CLAC SHIPMENT" << endl;
-	//calculateShipping(sess, 1);
+		case 12:
+			std::cout << "Please enter customer's first name:" << std::endl;
 
+			splitShipments(sess, ); //???????
+			break;
 
-	diffEdition(sess);
-	cout << "MOST TRANSLATED BOOK :" << endl;
-	mostTranslatedBook(sess);
-	cout << "CLAC SHIPMENT" << endl;
-	calculateShipping(sess, 1);*/
+		case 13:
+			std::cout << "Please enter shipping id:" << std::endl;
+			std::cin >> id;
+			getShipmentStatus(sess, id);
+			break;
 
-	//sumXpress(sess, 6, 2020);
+		case 14:
+			std::cout << "Please enter the month (as a number):" << std::endl;
+			std::cin >> month;
+			std::cout << "Please enter the year:" << std::endl;
+			std::cin >> year;
+			sumXpress(sess, month, year);
+			break;
 
-	//sumBit(sess, 6, 2020);
+		case 15:
+			std::cout << "Please enter the month (as a number):" << std::endl;
+			std::cin >> month;
+			std::cout << "Please enter the year:" << std::endl;
+			std::cin >> year;
+			sumBit(sess, month, year);
+			break;
 
-	//numOfShippingsExpressAndPost(sess);
-	//diffEdition(sess);
-	//sumBit(sess, 6, 2020);
-	//noPurchaseInThePastTwoYears(sess);
+		case 16:
+			aboveAvg(sess);
+			break;
 
-	//haventPurchasedReservations(sess);
-	//storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
-	//calculateSalary(sess, 12, 7, 2020);
-	//monthlyStorage(sess, 2019);
-	//bestSellingEmployee(sess, 6, 2020);
-	//reservationHistory(sess, 1);
+		case 17:
+			numOfShippingsExpressAndPost(sess);
+			break;
 
-	//mostTranslatedBook(sess);
-	//calculateSalary(sess, 12, 7, 2020);
-	//monthlyStorage(sess, 2019);
-	/*bestSellingEmployee(sess, 6, 2020);*/
-	/*monthProfit(sess, 2019, 5);*/
-	/*avgTrans(sess, 1980);*/
-	/*getShipmentStatus(sess, 500);*/
-	//calculateSalary(sess, 1, 5, 2019);
-	/*reservationList(sess);*/
-	//purchaseHistory(sess, "George", "Washington");
-	/*monthlyStorage(sess, 2024);*/
-	/*reservationList(sess);*/
-	top3Customers(sess);
+		case 18:
+			diffEdition(sess);
+			break;
 
+		case 19:
+			noPurchaseInThePastTwoYears(sess);
+			break;
+
+		case 20:
+			haventPurchasedReservations(sess);
+			break;
+
+		case 21:
+			std::cout << "Please enter the year:" << std::endl;
+			std::cin >> year;
+			monthlyStorage(sess, year);
+			break;
+
+		case 22:
+			storePurchaseBetweenTwoDates(sess, ); //?????????????????????
+			break;
+
+		case 23:
+			std::cout << "Please enter the month (as a number):" << std::endl;
+			std::cin >> month;
+			std::cout << "Please enter the year:" << std::endl;
+			std::cin >> year;
+			monthProfit(sess, year, month);
+			break;
+
+		case 24:
+			/* code */
+			break;
+
+		case 25:
+			std::cout << "Please enter employee id:" << std::endl;
+			std::cin >> id;
+			std::cout << "Please enter the month (as a number):" << std::endl;
+			std::cin >> month;
+			std::cout << "Please enter the year:" << std::endl;
+			std::cin >> year;
+			calculateSalary(sess, id, month, year);
+			break;
+
+		case 26:
+			std::cout << "Please enter the month (as a number):" << std::endl;
+			std::cin >> month;
+			std::cout << "Please enter the year:" << std::endl;
+			std::cin >> year;
+			bestSellingEmployee(sess, month, year);
+			break;
+
+		default:
+			break;
+		}
+	}
 
 	sess.close();
 }
