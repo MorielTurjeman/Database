@@ -1051,11 +1051,14 @@ int main(int argc, const char* argv[])
 			break;
 
 		case 6:
-			std::cout << "Please enter two dates:" << std::endl;
-			//??
-			favAuthor(sess, );
+		{
+			std::cout << "Please enter two dates in the following format: YYYY-mm-dd, for example, 2012-01-29:" << std::endl;
+			std::string first, second;
+			std::cin >> first;
+			std::cin >> second;
+			favAuthor(sess, first, second);
 			break;
-
+		}
 		case 7:
 			top3Customers(sess);
 			break;
@@ -1081,10 +1084,16 @@ int main(int argc, const char* argv[])
 			break;
 
 		case 12:
-			std::cout << "Please enter customer's first name:" << std::endl;
-
-			splitShipments(sess, ); //???????
+		{
+			std::cout << "Please enter customer's first and last name:" << std::endl;
+			std::string first;
+			std::string last;
+			std::cin >> first;
+			std::cin >> last;
+			splitShipments(sess, first, last); //???????
 			break;
+
+		}
 
 		case 13:
 			std::cout << "Please enter shipping id:" << std::endl;
@@ -1135,8 +1144,16 @@ int main(int argc, const char* argv[])
 			break;
 
 		case 22:
-			storePurchaseBetweenTwoDates(sess, ); //?????????????????????
+		{
+			std::cout << "Please enter two dates in the following format: YYYY-mm-dd, for example, 2012-01-29:" << std::endl;
+			std::string first, second;
+			std::cin >> first;
+			std::cin >> second;
+
+			storePurchaseBetweenTwoDates(sess, first, second); //?????????????????????
 			break;
+
+		}
 
 		case 23:
 			std::cout << "Please enter the month (as a number):" << std::endl;
