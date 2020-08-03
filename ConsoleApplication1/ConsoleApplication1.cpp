@@ -708,6 +708,48 @@ void storePurchaseBetweenTwoDates(Session& sess, std::string purchaseDate1, std:
 	}
 }
 
+//query 24, salary of a given employee
+void calculateSalary(Session& sess, int employeeId, int month, int year)
+{
+	auto query = sess.sql(R"(
+	SELECT 
+    emp.idEmployees as 'employee id',
+    emp.firstName,
+    emp.lastName,
+    wh.hour_month_salary AS 'wage per hour at the time',
+    (wh.hour_month_salary * wh.hours) AS 'total-salary',
+    wh.month,
+    wh.year
+FROM
+    employees AS emp
+        JOIN
+    work_hours AS wh ON emp.idEmployees = wh.employee_id
+WHERE
+    emp.idEmployees = ? AND wh.month = ?
+        AND wh.year = ?;
+	)");
+
+	query.bind(employeeId);
+	query.bind(month);
+	query.bind(year);
+
+	auto set = query.execute();
+	auto rows = set.fetchAll();
+
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Salary of " << row.get(1) << " " << row.get(2) << " for that month:" << row.get(4) << "." << std::endl;
+		}
+		std::cout << std::endl;
+	}
+	else
+	{
+		std::cout << "Could not calculate salary of employee with employee id" << employeeId << ". Please make sure the number you entered is correct." << std::endl;
+	}
+}
+
 int main(int argc, const char* argv[])
 {
 	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
@@ -784,7 +826,8 @@ int main(int argc, const char* argv[])
 	//noPurchaseInThePastTwoYears(sess);
 
 	//haventPurchasedReservations(sess);
-	storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
+	//storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
+	calculateSalary(sess, 12, 7, 2020);
 
 	sess.close();
 }
