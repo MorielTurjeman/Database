@@ -651,6 +651,63 @@ WHERE
 
 }
 
+//query 20, customers who made reservations and haven't bought the books
+void haventPurchasedReservations(Session& sess)
+{
+	auto query = sess.sql(R"(
+	select c.firstName, c.lastName, res.customer_id, res.book_id, DATE_FORMAT(res.lastContact,"%Y-%M-%d"), DATE_FORMAT( res.reservationDate, "%Y-%M-%d")  from bookstore.reservations as res join bookstore.customer as c on res.reservation_id = c.customer_id
+	where reservationStatus = 'arrived to store' 
+	and lastContact <= date_add(current_timestamp, interval -14 day);
+	)");
+
+	auto set = query.execute();
+	set.count();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Customers who have made reservations, were notified the books arrived and haven't bougt: " << std::endl;
+			std::cout << row.get(0) << " " << row.get(1) << ", customer id: " << row.get(2) << ", book id:" << row.get(3) << ", last contacted: " << row.get(4) << ", reservation date: "<< row.get(5) << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	else
+	{
+		std::cout << "Could not find how many shippings were done by Xpress and the Post Office." << std::endl;
+	}
+}
+
+//query 22, how many books the store purchase between date1 and date 2, and the sum of the price for them
+void storePurchaseBetweenTwoDates(Session& sess, std::string purchaseDate1, std::string purchaseDate2)
+{
+	auto query = sess.sql(R"(
+	select count(store_purchase_id) as purchaseCount,
+	sum(book_cost)
+	from store_purchase where purchaseDate between str_to_date(?, '%Y-%m-%d') and str_to_date(?, '%Y-%m-%d');
+	)");
+	query.bind(purchaseDate1);
+	query.bind(purchaseDate2);
+
+	auto set = query.execute();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Number of books the store bought: " << row.get(0) << "."<<std::endl;
+			std::cout << "Total cost for these books: " << row.get(1) <<"."<< std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	else
+	{
+		std::cout << "Could not find books between the two dates." << std::endl;
+	}
+}
+
 int main(int argc, const char* argv[])
 {
 	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
@@ -724,7 +781,10 @@ int main(int argc, const char* argv[])
 	//numOfShippingsExpressAndPost(sess);
 	//diffEdition(sess);
 	//sumBit(sess, 6, 2020);
-	noPurchaseInThePastTwoYears(sess);
+	//noPurchaseInThePastTwoYears(sess);
+
+	//haventPurchasedReservations(sess);
+	storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
 
 	sess.close();
 }
