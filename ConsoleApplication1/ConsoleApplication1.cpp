@@ -607,7 +607,49 @@ WHERE
 	
 }
 
+//query 19, list of customers who haven't bought anything in the past two years
+void noPurchaseInThePastTwoYears(Session& sess)
+{
+	auto query = sess.sql(R"(
+	SELECT 
+    c.firstName,
+    c.lastName,
+    c.customer_id,
+    c.address,
+    c.phoneNum
+FROM
+    bookstore.purchase AS p
+        JOIN
+    bookstore.customer AS c ON p.customer_id = c.customer_id
+WHERE
+    p.customer_id NOT IN (SELECT DISTINCT
+            purchase.customer_id
+        FROM
+            bookstore.purchase
+        WHERE
+            purchasDate BETWEEN DATE_ADD(CURRENT_TIMESTAMP,
+                INTERVAL - 2 YEAR) AND CURRENT_TIMESTAMP);
+	)");
 
+	auto set = query.execute();
+	set.count();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << "Customers who have not made any purchase in the past 24 months: " << std::endl;
+			std::cout << row.get(0) << " " << row.get(1) << ", customer id: " << row.get(2) << ", address:" << row.get(3) << ", phone number: " << row.get(4)<< "." << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	else
+	{
+		std::cout << "Could not find how many shippings were done by Xpress and the Post Office." << std::endl;
+	}
+
+}
 
 int main(int argc, const char* argv[])
 {
@@ -679,9 +721,10 @@ int main(int argc, const char* argv[])
 
 	//sumBit(sess, 6, 2020);
 
-	numOfShippingsExpressAndPost(sess);
-	diffEdition(sess);
-	sumBit(sess, 6, 2020);
+	//numOfShippingsExpressAndPost(sess);
+	//diffEdition(sess);
+	//sumBit(sess, 6, 2020);
+	noPurchaseInThePastTwoYears(sess);
 
 	sess.close();
 }
