@@ -318,10 +318,7 @@ void calculateShipping(Session& sess, int shipment_id)
 
 
 
-
-
-
-
+//query 1, is book in stock
 void isBookInStock(Session& sess, std::string bookName)
 {
 	
@@ -482,6 +479,70 @@ std::cout << "There are no Transactions with above - average profits in the past
 //query 18, Shipments with two different editions 
 
 
+//query 14, sum of deliveries done by Xpress in a given month
+void sumXpress(Session& sess, int month, int year)
+{
+	auto query = sess.sql(R"(
+	select b.company,  count(*) as DeliveriesCount
+	 from shipments s
+	 inner join  bookstore.delivery_types b
+	  on s.delivery_type_id = b.delivery_type_id
+	   inner join bookstore.purchase p
+		on s.purchase_id = p.purchase_id
+	where month(purchasDate) = ?
+	and year(purchasDate) = ?
+	group by b.company
+	having  b.company = 'Xpress';
+	)");
+
+	query.bind(month);
+	query.bind(year);
+	auto set = query.execute();
+
+	if (set.hasData())
+	{
+		auto rows = set.fetchAll();
+		std::cout << "Sum of deliveries done by Xpress in " << month << " of " << year << ": " << set.fetchOne().get(1) << std::endl;
+	}
+
+	else
+	{
+		std::cout << "There are no deliveries done by Xpress in " << month << " of " << year << std::endl;
+	}
+	set.count();
+	auto rows = set.fetchAll();
+
+}
+
+//query 15, sum of money transfered by Bit in a given month
+void sumBit(Session& sess, int month, int year)
+{
+	auto query = sess.sql(R"(
+	select month(purchasDate), paymentType, count(paymentType='Bit') as 'bit-count', sum(totalPrice)
+	from bookstore.purchase where paymentType = 'Bit'
+	and month(purchasDate) = ? and year(purchasDate) = ?
+	group by month(purchasDate);
+	)");
+	query.bind(month);
+	query.bind(year);
+	auto set = query.execute();
+
+	if (set.hasData())
+	{
+		auto rows = set.fetchAll();
+		std::cout << "Sum of money recieved by the app 'Bit' in " << month << " of " << year << ": " << set.fetchOne().get(3) << " New Israeli Shekels" << std::endl;
+	}
+
+	else
+	{
+		std::cout << "Could not find money from Bit in " << month << " of " << year << std::endl;
+	}
+	set.count();
+	auto rows = set.fetchAll();
+
+}
+
+
 
 int main(int argc, const char* argv[])
 {
@@ -491,7 +552,7 @@ int main(int argc, const char* argv[])
 	Session sess(url);
 	sess.sql("USE bookstore").execute();
 	
-	cout << "ship status" << endl;
+	/*cout << "ship status" << endl;
 	getShipmentStatus(sess, 3);
 
 	cout << "oldest book" << endl;
@@ -536,9 +597,11 @@ int main(int argc, const char* argv[])
 	cout << "MOST TRANSLATED BOOK :" << endl;
 	mostTranslatedBook(sess);
 	cout << "CLAC SHIPMENT" << endl;
-	calculateShipping(sess, 1);
+	calculateShipping(sess, 1);*/
 
+	//sumXpress(sess, 6, 2020);
 
+	sumBit(sess, 6, 2020);
 
 
 	sess.close();
