@@ -750,11 +750,6 @@ WHERE
 	}
 }
 
-int main(int argc, const char* argv[])
-
-
-
-
 
 //query 21, books in storage in monthly view
 void monthlyStorage(Session& sess, int year)
