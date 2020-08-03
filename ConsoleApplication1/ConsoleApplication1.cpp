@@ -750,6 +750,33 @@ WHERE
 	}
 }
 
+//query 25, employee who sold the most books in a given month
+void bestSellingEmployee(Session& sess, int month, int year)
+{
+	auto query = sess.sql(R"(
+	SELECT COUNT(employee_id) AS numOfSales, purch.employee_id, emp.firstName, emp.lastName FROM bookstore.purchase AS purch JOIN employees AS emp ON purch.employee_id = emp.idEmployees where month(purchasDate) = ? and year(purchasDate) = ? GROUP BY employee_id ORDER BY numOfSales DESC LIMIT 1;
+	)");
+
+	query.bind(month);
+	query.bind(year);
+
+	auto set = query.execute();
+	auto rows = set.fetchAll();
+
+	if (set.hasData())
+	{
+		for (auto row : rows)
+		{
+			std::cout << row.get(2) << " " << row.get(3) << ", employee id: " << row.get(1) << ", has made " << row.get(0) << " during that month." << std::endl;
+		}
+		std::cout << std::endl;
+	}
+	else
+	{
+		std::cout << "Could not find any sales made in " << month << "-"<<year << std::endl;
+	}
+}
+
 int main(int argc, const char* argv[])
 {
 	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
@@ -827,7 +854,9 @@ int main(int argc, const char* argv[])
 
 	//haventPurchasedReservations(sess);
 	//storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
-	calculateSalary(sess, 12, 7, 2020);
+	//calculateSalary(sess, 12, 7, 2020);
+
+	bestSellingEmployee(sess, 6, 2020);
 
 	sess.close();
 }
