@@ -114,50 +114,7 @@ void copiesSold(Session &sess, std::string bookName)
 	}
 }
 
-//query 1, is book X in stock
 
-// void isBookInStock(Session& sess, std::string bookName)
-// {
-// 	//define query
-// 	auto query = sess.sql(R"(SELECT
-//     b.bookName,
-//     b.book_id,
-//     count(sp.store_purchase_id) AS 'stockCount',
-//     count(bis.store_purchase_id) AS 'soldCount',
-//     ('stockCount' - 'soldCount') as toal
-// FROM
-//     books AS b
-//         JOIN
-//     store_purchase AS sp ON b.book_id = sp.book_id
-//         JOIN
-//     books_in_shipments AS bis ON sp.store_purchase_id = bis.store_purchase_id
-// WHERE
-//     b.bookName = ?
-
-// GROUP BY b.book_id;)");
-
-// 	query.bind(bookName); // set the paramenters
-// 	auto set = query.execute(); //run the query
-// 	if (set.hasData())
-// 	{
-// 		// the query returned at least one row
-// 		cout << "There are " << set.fetchOne().get(4) << " copies of " << bookName << endl;
-
-// 	}
-// 	else
-// 	{
-// 		cout << "Could not get number of copies" << endl;
-// 		// the query returnes 0 rows
-// 	}
-// 	set.count();
-// 	auto rows = set.fetchAll();
-
-// 	for (auto row : rows)
-// 	{
-// 		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
-// 	}
-
-// }
 
 //query 2, who is the oldest customer
 void whoIsTheOldestCustomer(Session &sess)
@@ -334,12 +291,19 @@ GROUP BY b.book_id;)");
 
 	query.bind(bookName);		// set the paramenters
 	auto set = query.execute(); //run the query
-	auto rows = set.fetchAll();
-
-	for (auto row : rows)
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 	{
-		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
+		for (auto row : rows)
+		{
+			std::cout << row.get(0) << "book ID:  ," << row.get(1) << "In stock:  , " << row.get(2);
+		}
 	}
+	else
+	{
+		std::cout << "Book " << bookName << " is not in stock" << endl;
+	}
+	
 }
 
 //query 6, Favorite Author
@@ -375,7 +339,7 @@ from bookstore.authors
 }
 
 //query 12, Split shipments details
-void splitShipments(Session &sess, std::string customerFN, std::string customerLN)
+void splitShipments(Session& sess, std::string customerFN, std::string customerLN)
 {
 	auto query = sess.sql(R"(select purchase.purchase_id, DATE_FORMAT(purchase.purchasDate, "%Y-%M-%d") , customer.firstName, customer.lastName, delivery_types.company, delivery_types.type, s1.trackingNum, s1.address
 from
@@ -389,10 +353,9 @@ where s1.shipment_id != s2.shipment_id and customer.firstName = ? and customer.l
 	query.bind(customerLN);
 	auto set = query.execute();
 
-	if (set.hasData())
-	{
-		auto rows = set.fetchAll();
-
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size()){
+	
 		for (auto row : rows)
 		{
 			std::cout << "purchase id: ";
@@ -439,10 +402,11 @@ ORDER BY purchase.purchase_id;
 
 	auto set = query.execute();
 
-	if (set.hasData())
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 	{
 
-		auto rows = set.fetchAll();
+		
 		std::cout << "Transactions with above-average profits in the past 12 months:" << endl;
 		for (auto row : rows)
 		{
@@ -488,10 +452,11 @@ WHERE
         AND T1.bookName = T2.bookName;)");
 
 	auto set = query.execute();
-	if (set.hasData())
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 	{
 
-		auto rows = set.fetchAll();
+		
 
 		for (auto row : rows)
 		{
@@ -636,8 +601,8 @@ WHERE
 
 	auto set = query.execute();
 	set.count();
-	auto rows = set.fetchAll();
-	if (set.hasData())
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 	{
 		for (auto row : rows)
 		{
@@ -665,8 +630,8 @@ void haventPurchasedReservations(Session& sess)
 
 	auto set = query.execute();
 	set.count();
-	auto rows = set.fetchAll();
-	if (set.hasData())
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 	{
 		for (auto row : rows)
 		{
@@ -879,9 +844,10 @@ void avgTrans(Session& sess, int year)
 	query.bind(year);
 
 	auto set = query.execute();
-	if (set.hasData())
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 	{
-		auto rows = set.fetchAll();
+		
 		for (auto row : rows)
 		{
 			std::cout << "transactions avarege: " << row.get(0) << ", " << "Month: " <<row.get(1) << ", " << "year: " << row.get(2) << endl;
@@ -961,8 +927,8 @@ void purchaseHistory(Session& sess, std::string CustomerFN, std::string customer
 	query.bind(CustomerFN);
 	query.bind(customerLN);
 	auto set = query.execute();
-	auto rows = set.fetchAll();
-	if (set.hasData())
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 	{
 
 		for (auto row : rows)
@@ -990,9 +956,9 @@ void reservationHistory(Session& sess, int customerId)
 	query.bind(customerId);
 
 	auto set = query.execute();
-	auto rows = set.fetchAll();
+	std::vector<Row> rows = set.fetchAll();
+	if (rows.size())
 
-	if (set.hasData())
 	{
 		
 		for (auto row : rows)
