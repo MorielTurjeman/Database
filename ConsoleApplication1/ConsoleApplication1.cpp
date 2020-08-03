@@ -34,6 +34,7 @@
 #include <mysqlx/xdevapi.h>
 #include <string>
 #include <ctime>
+#include <vector>
 using ::std::cout;
 using ::std::endl;
 using namespace ::mysqlx;
@@ -46,11 +47,11 @@ void getShipmentStatus(Session &sess, int shipmentId)
 				bookstore.shipments where shipment_id = ?)");
 	query.bind(shipmentId);
 	auto set = query.execute();
-
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
 		// the query returned at least one row
-		cout << "The status of shipment id: " << shipmentId << " is: " << set.fetchOne().get(1) << endl;
+		cout << "The status of shipment id: " << shipmentId << " is: " << row.get(1) << endl;
 		//fetch one return the current row, and advances to the next one, if exists.
 		//we use fetchone instead of a loop since this query should return only one row anyway,
 		//if more than one row should be reutrned, we will use a loop with fetchall.
@@ -75,10 +76,10 @@ order by purchaseDate
 limit 1;)");
 
 	auto set = query.execute();
-
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
-		cout << "the oldest book is:" << set.fetchOne().get(0) << endl;
+		cout << "the oldest book is:" << row.get(0) << endl;
 	}
 
 	else
@@ -101,10 +102,10 @@ void copiesSold(Session &sess, std::string bookName)
 
 	query.bind(bookName);
 	auto set = query.execute();
-
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
-		cout << "The book:" << bookName << " has been sold: " << set.fetchOne().get(2) << " times" << endl;
+		cout << "The book:" << bookName << " has been sold: " << row.get(2) << " times" << endl;
 	}
 
 	else
@@ -167,10 +168,11 @@ void whoIsTheOldestCustomer(Session &sess)
 	)");
 
 	auto set = query.execute(); //run the query
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
 		// the query returned at least one row
-		cout << "The oldest customer is " << set.fetchOne().get(0) << std::endl;
+		cout << "The oldest customer is: " << row.get(0) << std::endl;
 	}
 	else
 	{
@@ -178,12 +180,7 @@ void whoIsTheOldestCustomer(Session &sess)
 		// the query returnes 0 rows
 	}
 
-	auto rows = set.fetchAll();
 
-	for (auto row : rows)
-	{
-		std::cout << row.get(0) << ", " << row.get(1) << ", " << row.get(2);
-	}
 }
 
 //q4, current reservation list
@@ -205,26 +202,27 @@ void reservationList(Session &sess)
 	)");
 
 	auto set = query.execute(); //run the query
+	
 
-	if (set.hasData())
-	{
-
-		auto rows = set.fetchAll();
-
-		for (auto row : rows)
-
+		std::list<Row> rows = set.fetchAll();
+		if (rows.size() > 0)
 		{
-			for (int i = 0; i < 5; i++)
+			for (auto row : rows)
+
 			{
-				std::cout << row.get(i) << " , ";
+				
+				
+					std::cout << "Customer:" << row.get(0) << "  " << row.get(1) << " , "  "book name:" << row.get(2) << ", " << "reservation date: " << row.get(3) << " " << "Statuse: " << row.get(4) << endl;
+				
+				std::cout << endl;
 			}
-			std::cout << endl;
 		}
-	}
-	else
-	{
-		cout << "Could not find any reservations." << std::endl;
-	}
+		else
+		{
+			cout << "Could not find any reservations." << std::endl;
+		}
+	
+	
 }
 
 //query 7, 3 customers who have bought the most books
@@ -241,9 +239,11 @@ void top3Customers(Session &sess)
 
 	auto set = query.execute();
 
-	if (set.hasData())
+	std::vector<Row> rows = set.fetchAll();
+
+	if (rows.size())
 	{
-		auto rows = set.fetchAll();
+		
 		for (auto row : rows)
 		{
 			for (int i = 0; i < 3; i++)
@@ -270,9 +270,10 @@ void mostTranslatedBook(Session &sess)
 	order by  Translations desc limit 1
 	)");
 	auto set = query.execute();
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
-		std::cout << "The most translated book in stock is: " << set.fetchOne().get(0) << std::endl;
+		std::cout << "The most translated book in stock is: " << row.get(0) << std::endl;
 	}
 
 	else
@@ -299,9 +300,10 @@ void calculateShipping(Session &sess, int shipment_id)
                                 order by deliveryID asc;)");
 	query.bind(shipment_id);
 	auto set = query.execute();
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
-		std::cout << "The shipping price for the delivery is: " << set.fetchOne().get(1) << " New Israeli Shekels." << std::endl;
+		std::cout << "The shipping price for the delivery is: " << row.get(1) << " New Israeli Shekels." << std::endl;
 	}
 	else
 	{
@@ -359,10 +361,11 @@ from bookstore.authors
 	query.bind(purchaseDateD1);
 	query.bind(purchaseDateD2);
 	auto set = query.execute();
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 
 	{
-		auto row = set.fetchOne();
+		
 		std::cout << "The author most read is: " << row.get(0) << " " << row.get(1) << endl;
 	}
 
@@ -396,7 +399,7 @@ where s1.shipment_id != s2.shipment_id and customer.firstName = ? and customer.l
 			std::cout << "purchase id: ";
 			for (int i = 0; i < 8; i++)
 				std::cout << row.get(i) << " "; // << ", " << row.get(1) << ", " << row.get(2) << ", " << row.get(3) << ", " << row.get(4) << ", " << row.get(5) << ", " << row.get(6) << ", " << row.get(7) << endl;
-			std::cout << endl;
+			
 		}
 	}
 	else
@@ -530,11 +533,11 @@ void sumXpress(Session &sess, int month, int year)
 	query.bind(month);
 	query.bind(year);
 	auto set = query.execute();
-
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
-		auto rows = set.fetchAll();
-		std::cout << "Sum of deliveries done by Xpress in " << month << " of " << year << ": " << set.fetchOne().get(1) << std::endl;
+		
+		std::cout << "Sum of deliveries done by Xpress in " << month << " of " << year << ": " << row.get(1) << std::endl;
 	}
 
 	else
@@ -557,11 +560,12 @@ void sumBit(Session &sess, int month, int year)
 	query.bind(month);
 	query.bind(year);
 	auto set = query.execute();
+	auto row = set.fetchOne();
 
-	if (set.hasData())
+	if (row)
 	{
 		auto rows = set.fetchAll();
-		std::cout << "Sum of money recieved by the app 'Bit' in " << month << " of " << year << ": " << set.fetchOne().get(3) << " New Israeli Shekels" << std::endl;
+		std::cout << "Sum of money recieved by the app 'Bit' in " << month << " of " << year << ": " << row.get(3) << " New Israeli Shekels" << std::endl;
 	}
 
 	else
@@ -591,13 +595,13 @@ WHERE
 
 	auto set = query.execute();
 	set.count();
-	auto rows = set.fetchAll();
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
-		for (auto row : rows)
-		{
+		
+		
 			std::cout << "Number of deliveries done by The Israeli Post Office: " <<row.get(0) << ". Number of deliveries done by Xpress company: " << row.get(1) << std::endl;
-		}
+		
 	}
 
 	else
@@ -691,14 +695,14 @@ void storePurchaseBetweenTwoDates(Session& sess, std::string purchaseDate1, std:
 	query.bind(purchaseDate2);
 
 	auto set = query.execute();
-	auto rows = set.fetchAll();
-	if (set.hasData())
+	auto row = set.fetchOne();
+	if (row)
 	{
-		for (auto row : rows)
-		{
+		
+		
 			std::cout << "Number of books the store bought: " << row.get(0) << "."<<std::endl;
 			std::cout << "Total cost for these books: " << row.get(1) <<"."<< std::endl;
-		}
+		
 		std::cout << std::endl;
 	}
 
@@ -734,14 +738,14 @@ WHERE
 	query.bind(year);
 
 	auto set = query.execute();
-	auto rows = set.fetchAll();
+	auto row = set.fetchOne();
 
-	if (set.hasData())
+	if (row)
 	{
-		for (auto row : rows)
-		{
-			std::cout << "Salary of " << row.get(1) << " " << row.get(2) << " for that month:" << row.get(4) << "." << std::endl;
-		}
+		
+		
+			std::cout << "Salary of " << row.get(1) << " " << row.get(2) << " for month:" <<month <<" "<<"is:" << row.get(4) << "." << std::endl;
+		
 		std::cout << std::endl;
 	}
 	else
@@ -777,20 +781,18 @@ order by T1.month;)");
 	query.bind(year);
 	query.bind(year);
 	auto set = query.execute();
+	std::vector<Row> rows = set.fetchAll();
 
-	if (set.hasData())
+	if (rows.size())
 	{
-		auto rows = set.fetchAll();
 		for (auto row : rows)
-		{
-			std::cout << "year:" <<year << ", "<<" Month: " << row.get(0) << ", " << "amount of books in storage: " << row.get(1)<< endl;
-		}
+			std::cout << "Year: " << year << " , Month: " << row.get(0) << ", Books in storage: " << row.get(1) << endl;
 		
 	}
 
 	else
 	{
-		std::cout << "There were no books at storage at" << " " << year << "pick Another year " << endl;
+		std::cout << "There were no books at storage at" << " " << year << " pick Another year " << endl;
 	}
 
 }
@@ -799,21 +801,102 @@ order by T1.month;)");
 
 
 
+//query 22, Store profit in a specific month
+void monthProfit(Session& sess, int year, int month) {
+	auto query = sess.sql(R"(SELECT 
+    t1.year, t1.month, SUM(outgoing) 'profit'
+FROM
+    (SELECT 
+         year(store_purchase.purchaseDate) 'year', MONTH(store_purchase.purchaseDate) 'month',
+            - 1 * SUM(store_purchase.book_cost) 'outgoing'
+    FROM
+        store_purchase
+    WHERE
+        YEAR(purchaseDate) = ? and
+        month(purchaseDate) = ?
+    GROUP BY year(purchaseDate), MONTH(purchaseDate) 
+    UNION
+    SELECT 
+        year(purchase.purchasDate) 'year',
+		MONTH(purchase.purchasDate) 'month',
+            SUM(store_purchase.price) 'incoming'
+    FROM
+        books_in_shipments
+    INNER JOIN store_purchase ON books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+    INNER JOIN shipments ON books_in_shipments.shipment_id = shipments.shipment_id
+    INNER JOIN purchase ON shipments.purchase_id = purchase.purchase_id
+    WHERE
+        YEAR(purchaseDate) = ? and
+        month(purchaseDate) = ?
+    GROUP BY year(purchase.purchasDate), MONTH(purchase.purchasDate)) t1
+ group by t1.year, t1.month)");
+
+query.bind(year);
+query.bind(month);
+query.bind(year);
+query.bind(month);
+
+auto set = query.execute();
+auto row = set.fetchOne();
+if (row)
+	{
+		
+			std::cout << "year:" <<year<< ", "<< "Month: " <<  ", " << "Profit:  " << row.get(2)<< endl;
+		
+		
+	}
+
+	else
+	{
+		std::cout << "there are no profits at:" << year<< " " << month << " " << "try differnt year or month"<< endl;
+	}
 
 
 
 
+}
 
 
 
+//query 23, Average transactions monthly view
+void avgTrans(Session& sess, int year)
+{
+	auto query = sess.sql(R"(SELECT
+		avg(delivery_types.costPerBook + delivery_types.weightCost * books.weight + store_purchase.price) 'transaction avg', month(purchase.purchasDate), year(purchase.purchasDate)
+		FROM
+		books_in_shipments
+		INNER JOIN
+		store_purchase ON books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+		INNER JOIN
+		shipments ON books_in_shipments.shipment_id = shipments.shipment_id
+		INNER JOIN
+		delivery_types ON shipments.delivery_type_id = delivery_types.delivery_type_id
+		INNER JOIN
+		books ON store_purchase.book_id = books.book_id
+		INNER JOIN purchase ON shipments.purchase_id = purchase.purchase_id
+		WHERE year(purchase.purchasDate) = ?
+		group by year(purchase.purchasDate),month(purchase.purchasDate);)");
+
+	query.bind(year);
+
+	auto set = query.execute();
+	if (set.hasData())
+	{
+		auto rows = set.fetchAll();
+		for (auto row : rows)
+		{
+			std::cout << "transactions avarege: " << row.get(0) << ", " << "Month: " <<row.get(1) << ", " << "year: " << row.get(2) << endl;
+		}
+
+	}
+
+	else
+	{
+		std::cout << "there are no transactions at:" << year << " " << "try differnt year" << endl;
+	}
 
 
-
-
-
-
-
-
+ }
 
 
 
@@ -832,19 +915,65 @@ void bestSellingEmployee(Session& sess, int month, int year)
 	query.bind(year);
 
 	auto set = query.execute();
-	auto rows = set.fetchAll();
+	auto row = set.fetchOne();
 
-	if (set.hasData())
+	if (row)
 	{
-		for (auto row : rows)
-		{
+		
+		
 			std::cout << row.get(2) << " " << row.get(3) << ", employee id: " << row.get(1) << ", has made " << row.get(0) << " during that month." << std::endl;
-		}
+		
 		std::cout << std::endl;
 	}
 	else
 	{
-		std::cout << "Could not find any sales made in " << month << "-"<<year << std::endl;
+		std::cout << "Could not find any sales made in " << month << " "<<year << std::endl;
+	}
+}
+
+
+
+//query 9, purchase history of customer
+void purchaseHistory(Session& sess, std::string CustomerFN, std::string customerLN)
+{
+	auto query = sess.sql(R"(  SELECT 
+		customer.firstName,
+		customer.lastName,
+		DATE_FORMAT(purchase.purchasDate, "%Y-%M-%d"),
+		books.bookName,
+		store_purchase.price
+		FROM
+		bookstore.books_in_shipments
+		INNER JOIN
+		bookstore.shipments ON shipments.shipment_id = books_in_shipments.shipment_id
+		INNER JOIN
+		bookstore.purchase ON shipments.purchase_id = purchase.purchase_id
+		INNER JOIN
+		bookstore.customer ON purchase.customer_id = customer.customer_id
+		INNER JOIN
+		bookstore.store_purchase ON store_purchase.store_purchase_id = books_in_shipments.store_purchase_id
+		inner join
+		bookstore.books on store_purchase.book_id = books.book_id
+		WHERE
+		customer.firstName = ? and
+		customer.lastName=?
+		ORDER BY purchase.purchasDate ASC;)");
+
+	query.bind(CustomerFN);
+	query.bind(customerLN);
+	auto set = query.execute();
+	auto rows = set.fetchAll();
+	if (set.hasData())
+	{
+
+		for (auto row : rows)
+		{
+			std::cout << "Customer:" << row.get(0) << "  " << row.get(1) << " , " << "purchase date:" << row.get(2) << ", " << "Book name: " << row.get(3) << " , " << "Price:" << row.get(4) << endl;
+		}
+	}
+	else
+	{
+		std::cout << "this customer does not have a purchase history" << endl;
 	}
 }
 
@@ -925,9 +1054,19 @@ int main(int argc, const char* argv[])
 
 	//haventPurchasedReservations(sess);
 	//storePurchaseBetweenTwoDates(sess, "2000-07-07", "2020-07-07");
-	calculateSalary(sess, 12, 7, 2020);
-	monthlyStorage(sess, 2019);
-	bestSellingEmployee(sess, 6, 2020);
+	//calculateSalary(sess, 12, 7, 2020);
+	//monthlyStorage(sess, 2019);
+	/*bestSellingEmployee(sess, 6, 2020);*/
+	/*monthProfit(sess, 2019, 5);*/
+	/*avgTrans(sess, 1980);*/
+	/*getShipmentStatus(sess, 500);*/
+	//calculateSalary(sess, 1, 5, 2019);
+	/*reservationList(sess);*/
+	//purchaseHistory(sess, "George", "Washington");
+	/*monthlyStorage(sess, 2024);*/
+	/*reservationList(sess);*/
+	top3Customers(sess);
+
 
 	sess.close();
 }
