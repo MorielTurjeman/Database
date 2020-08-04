@@ -1155,7 +1155,7 @@ int main(int argc, const char* argv[])
 			std::cin >> first;
 			std::cin >> second;
 
-			storePurchaseBetweenTwoDates(sess, first, second); //?????????????????????
+			storePurchaseBetweenTwoDates(sess, first, second);
 			break;
 
 		}
