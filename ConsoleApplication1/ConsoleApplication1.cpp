@@ -726,25 +726,46 @@ WHERE
 //query 21, books in storage in monthly view
 void monthlyStorage(Session& sess, int year)
 {
-	auto query = sess.sql(R"(select month, sum(bookIntoStorage) from
-(
-select distinct month(purchaseDate) as 'month', count(*) over(order by month(purchaseDate))  as 'bookIntoStorage'
-from
-	store_purchase
-where
-	location = 'storage'
-    and
-    year(purchaseDate) = ?
-union 
-select month(purchasDate), -1*count(*) as 'booksOutOfStorage'
-from books_in_shipments inner join shipments on shipments.shipment_id=books_in_shipments.shipment_id
-inner join purchase on shipments.purchase_id=purchase.purchase_id
-inner join store_purchase on books_in_shipments.store_purchase_id=store_purchase.store_purchase_id
-where year(purchasDate)=? and location='storage'
-group by month(purchasDate)
-) T1
-group by T1.month
-order by T1.month;)");
+	auto query = sess.sql(R"(select T1.month, sum(T1.booksInStorage) from (
+						select distinct months.month , not isnull(store_purchase.store_purchase_id) as 'valid', sum(not isnull(store_purchase.store_purchase_id)) over (order by months.month) as 'booksInStorage'
+						from (
+								select 1 as month ,0 as count from dual union
+							select 2,0 from dual union
+							select 3,0 from dual union
+							select 4,0 from dual union
+							select 5,0 from dual union
+							select 6,0 from dual union
+							select 7,0 from dual union
+							select 8,0 from dual union
+							select 9,0 from dual union
+							select 10,0 from dual union
+							select 11,0 from dual union
+							select 12,0 from dual
+						) as months
+						left join store_purchase on months.month = month(store_purchase.purchaseDate) and year(store_purchase.purchaseDate) = ? and location = 'storage'
+						union
+						select distinct months.month, not isnull(purchase.purchase_id) as 'valid', -1 * sum(not isnull(purchase.purchase_id)) over (order by months.month)
+						from (
+								select 1 as month ,0 as count from dual union
+							select 2,0 from dual union
+							select 3,0 from dual union
+							select 4,0 from dual union
+							select 5,0 from dual union
+							select 6,0 from dual union
+							select 7,0 from dual union
+							select 8,0 from dual union
+							select 9,0 from dual union
+							select 10,0 from dual union
+							select 11,0 from dual union
+							select 12,0 from dual
+						) as months
+						left join ( purchase
+												inner join shipments on purchase.purchase_id = shipments.purchase_id
+									inner join books_in_shipments on books_in_shipments.shipment_id = shipments.shipment_id
+									inner join store_purchase on books_in_shipments.store_purchase_id = store_purchase.store_purchase_id
+									)
+						on months.month = month(purchase.purchasDate) and year(purchase.purchasDate) = ? and store_purchase.location = 'storage' )  as T1
+						group by T1.month;)");
 
 	query.bind(year);
 	query.bind(year);
@@ -978,18 +999,8 @@ void reservationHistory(Session& sess, int customerId)
 	}
 }
 
-
-
-int main(int argc, const char* argv[])
+void printMenu()
 {
-	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
-	cout << "Creating session on " << url
-		 << " ..." << endl;
-	Session sess(url);
-	sess.sql("USE bookstore").execute();
-	
-	int choice;
-
 	std::cout << "Pick a number" << std::endl;
 	std::cout << "0. Terminate the program.";
 	std::cout << "1. Check if a book is in stock." << std::endl;
@@ -1018,13 +1029,28 @@ int main(int argc, const char* argv[])
 	std::cout << "24. Average annual number of transactions per month in a certain year." << std::endl;
 	std::cout << "25. Check the salary of an employee in a certain month." << std::endl;
 	std::cout << "26. Check which employee made the most sales in a certain month." << std::endl;
+}
+
+int main(int argc, const char* argv[])
+{
+	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
+	cout << "Creating session on " << url
+		 << " ..." << endl;
+	Session sess(url);
+	sess.sql("USE bookstore").execute();
+	
+	int choice;
+	
 
 	std::string bookName;
 	int id, month, year;
 
 	while (1)
 	{
+		printMenu();
+
 		std::cin >> choice;
+
 		switch (choice)
 		{
 
@@ -1194,8 +1220,7 @@ int main(int argc, const char* argv[])
 			break;
 		}
 
-		std::cout << "Pick a number" << std::endl;
-
+		system("pause");
 	}
 
 	sess.close();
