@@ -1002,7 +1002,7 @@ void reservationHistory(Session& sess, int customerId)
 void printMenu()
 {
 	std::cout << "Pick a number" << std::endl;
-	std::cout << "0. Terminate the program.";
+	std::cout << "0. Terminate the program." << std::endl;
 	std::cout << "1. Check if a book is in stock." << std::endl;
 	std::cout << "2. Check which employee has worked in the store for the longest time." << std::endl;
 	std::cout << "3. Check which book has been in stock for the longest time." << std::endl;
@@ -1043,6 +1043,7 @@ int main(int argc, const char* argv[])
 	
 
 	std::string bookName;
+	std::string CustomerFN, customerLN;
 	int id, month, year;
 
 	while (1)
@@ -1050,6 +1051,7 @@ int main(int argc, const char* argv[])
 		printMenu();
 
 		std::cin >> choice;
+		std::cin.ignore();
 
 		switch (choice)
 		{
@@ -1099,7 +1101,10 @@ int main(int argc, const char* argv[])
 			break;
 
 		case 9:
-			/* code */
+			std::cout << "Please enter customer first and last name" << std::endl;
+			std::cin >> CustomerFN;
+			std::cin >> customerLN;
+			purchaseHistory(sess, CustomerFN, customerLN);
 			break;
 
 		case 10:
@@ -1121,7 +1126,7 @@ int main(int argc, const char* argv[])
 			std::string last;
 			std::cin >> first;
 			std::cin >> last;
-			splitShipments(sess, first, last); //???????
+			splitShipments(sess, first, last); 
 			break;
 
 		}
@@ -1195,7 +1200,9 @@ int main(int argc, const char* argv[])
 			break;
 
 		case 24:
-			/* code */
+			std::cout << "Please enter year:" << std::endl;
+			std::cin >> year;
+			avgTrans(sess, year);
 			break;
 
 		case 25:
