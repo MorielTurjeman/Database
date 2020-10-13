@@ -1033,10 +1033,7 @@ void printMenu()
 
 int main(int argc, const char* argv[])
 {
-	const char *url = (argc > 1 ? argv[1] : "mysqlx://mysqluser:mysqlpassword@178.79.166.104");
-	cout << "Creating session on " << url
-		 << " ..." << endl;
-	Session sess(url);
+	Session sess(argv[1]);
 	sess.sql("USE bookstore").execute();
 	
 	int choice;
